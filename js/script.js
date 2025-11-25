@@ -1,3 +1,6 @@
+// Array per memorizzare gli UU delle card
+const cardUuArray = [];
+
 async function parseFile(){
   const f = document.getElementById('fileInput').files[0];
   if(!f){ alert('Seleziona un file ZIP'); return; }
@@ -46,6 +49,7 @@ async function parseFile(){
 function buildCards(xml){
   const container = document.getElementById('cards');
   container.innerHTML = '';
+  cardUuArray.length = 0; // Reset array
 
   const tables = xml.querySelectorAll('[type="table"]');
 
@@ -57,6 +61,16 @@ function buildCards(xml){
     const uuNode = table.querySelector(tagName + '_UU');
     const elementName = table.querySelector('Name');
     const uu = uuNode ? uuNode.textContent.trim() : '(nessun UU)';
+
+    // Salvare l'UU nell'array
+    if (uu !== '(nessun UU)') {
+      cardUuArray.push(uu);
+    }
+
+    // Assegnare un ID univoco alla card in base all'UU
+    if (uu !== '(nessun UU)') {
+      card.id = `card-${uu}`;
+    }
 
     const title = document.createElement('h4');
     title.textContent = tagName;
@@ -95,18 +109,45 @@ function buildCards(xml){
         const group = document.createElement('div');
         group.className = 'input-group mb-2';
 
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'form-control query-box';
-        input.value = query;
-        input.readOnly = true;
+        // Creare il display della query con UUID sottolineato
+        const queryDisplay = document.createElement('div');
+        queryDisplay.className = 'form-control query-box d-flex align-items-center';
+        
+        if (refType === 'uuid') {
+          // Costruire il testo con l'UUID sottolineato
+          const beforeUuid = `SELECT * FROM ${refKey} WHERE ${refKey}_UU = '`;
+          const afterUuid = `'`;
+          
+          const uuidSpan = document.createElement('span');
+          const isInList = cardUuArray.includes(value);
+          uuidSpan.className = isInList ? 'uuid-in-list' : 'uuid-not-in-list';
+          uuidSpan.textContent = value;
+          
+          // Aggiungere stile e click handler solo per UUID in lista
+          if (isInList) {
+            uuidSpan.style.cursor = 'pointer';
+            uuidSpan.onclick = (e) => {
+              e.stopPropagation();
+              const targetCard = document.getElementById(`card-${value}`);
+              if (targetCard) {
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            };
+          }
+          
+          queryDisplay.appendChild(document.createTextNode(beforeUuid));
+          queryDisplay.appendChild(uuidSpan);
+          queryDisplay.appendChild(document.createTextNode(afterUuid));
+        } else {
+          queryDisplay.textContent = query;
+        }
 
         const btn = document.createElement('button');
         btn.className = 'btn btn-outline-secondary';
         btn.textContent = 'Copia';
         btn.onclick = () => navigator.clipboard.writeText(query);
 
-        group.appendChild(input);
+        group.appendChild(queryDisplay);
         group.appendChild(btn);
 
         card.appendChild(label);

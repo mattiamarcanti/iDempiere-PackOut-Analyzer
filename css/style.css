@@ -54,3 +54,25 @@ label, .text-muted {
 .mb-3 {
     margin-bottom: 2rem !important;
 }
+
+.uuid-in-list {
+  text-decoration: underline;
+  text-decoration-color: #4caf50;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+  color: #4caf50;
+  transition: color 0.2s, text-decoration-color 0.2s;
+}
+
+.uuid-in-list:hover {
+  color: #2e7d32;
+  text-decoration-color: #2e7d32;
+}
+
+.uuid-not-in-list {
+  text-decoration: underline;
+  text-decoration-color: #bb1515;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+  color: #bb1515;
+}
