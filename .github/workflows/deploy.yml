@@ -1,0 +1,31 @@
+name: Deploy FTP to mattiamarcanti.it [TEST]
+
+on:
+  push:
+    branches: ["main"] 
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to Aruba hosting mattiamarcanti.it via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}      
+          username: ${{ secrets.FTP_USER }}       
+          password: ${{ secrets.FTP_PASSWORD }}   
+          protocol: ftps
+          port: 21
+
+          # 📌 CARTELLA DI DESTINAZIONE SUL SERVER
+          server-dir: /iDempierePackoutAnalyzer/
+
+          # 📌 CARTELLA LOCALE DA CARICARE (tutto il repo)
+          local-dir: ./
+
+          # opzionale: sovrascrivi sempre
+          dangerous-clean-slate: false
