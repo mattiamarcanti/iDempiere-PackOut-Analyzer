@@ -176,5 +176,5 @@ function buildQuery(refType, refKey, value){
   if(refType === 'uuid'){
     return `SELECT * FROM ${refKey} WHERE ${refKey}_UU = '${value}';`;
   }
-  return '-- reference non gestito --';
+  return '-- Riferimento non gestito --';
 }
