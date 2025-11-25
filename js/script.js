@@ -114,16 +114,12 @@ function buildCards(xml){
         queryDisplay.className = 'form-control query-box d-flex align-items-center';
         
         if (refType === 'uuid') {
-          // Costruire il testo con l'UUID sottolineato
-          const beforeUuid = `SELECT * FROM ${refKey} WHERE ${refKey}_UU = '`;
-          const afterUuid = `'`;
-          
-          const uuidSpan = document.createElement('span');
+          // Costruire il testo con l'UUID sottolineato usando la query completa (incluso il punto e virgola)
           const isInList = cardUuArray.includes(value);
+          const uuidSpan = document.createElement('span');
           uuidSpan.className = isInList ? 'uuid-in-list' : 'uuid-not-in-list';
           uuidSpan.textContent = value;
-          
-          // Aggiungere stile e click handler solo per UUID in lista
+
           if (isInList) {
             uuidSpan.style.cursor = 'pointer';
             uuidSpan.onclick = (e) => {
@@ -134,17 +130,31 @@ function buildCards(xml){
               }
             };
           }
-          
-          queryDisplay.appendChild(document.createTextNode(beforeUuid));
-          queryDisplay.appendChild(uuidSpan);
-          queryDisplay.appendChild(document.createTextNode(afterUuid));
+
+          // Sostituire la parte `'value'` nella query con quote + span + resto (la query contiene ora il `;` finale)
+          const pattern = `'${value}'`;
+          const idx = query.indexOf(pattern);
+          if (idx !== -1) {
+            const beforeText = query.slice(0, idx + 1); // include la virgoletta di apertura
+            const afterText = query.slice(idx + 1 + value.length); // include la virgoletta di chiusura e eventuale `;`
+
+            queryDisplay.appendChild(document.createTextNode(beforeText));
+            queryDisplay.appendChild(uuidSpan);
+            queryDisplay.appendChild(document.createTextNode(afterText));
+          } else {
+            // fallback: se non troviamo la corrispondenza, mostriamo la query intera
+            queryDisplay.textContent = query;
+          }
         } else {
           queryDisplay.textContent = query;
         }
 
         const btn = document.createElement('button');
         btn.className = 'btn btn-outline-secondary';
-        btn.textContent = 'Copia';
+        btn.type = 'button';
+        // Icona copia (due quadrati sovrapposti) - mantiene la stessa funzionalità di copia
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><rect x="1" y="1" width="13" height="13" rx="2" ry="2"></rect></svg>';
+        btn.setAttribute('aria-label', 'Copia query');
         btn.onclick = () => navigator.clipboard.writeText(query);
 
         group.appendChild(queryDisplay);
@@ -161,10 +171,10 @@ function buildCards(xml){
 
 function buildQuery(refType, refKey, value){
   if(refType === 'id'){
-    return `SELECT * FROM ${refKey} WHERE ${refKey}_ID = ${value}`;
+    return `SELECT * FROM ${refKey} WHERE ${refKey}_ID = ${value};`;
   }
   if(refType === 'uuid'){
-    return `SELECT * FROM ${refKey} WHERE ${refKey}_UU = '${value}'`;
+    return `SELECT * FROM ${refKey} WHERE ${refKey}_UU = '${value}';`;
   }
   return '-- reference non gestito --';
 }
