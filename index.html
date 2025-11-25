@@ -12,12 +12,13 @@
 
 <h1 class="mb-3 text-center">iDempiere PackOut Analyzer</h1>
 <div class="d-flex gap-2 mb-3">
-  <input id="fileInput" type="file" accept=".xml" class="form-control" />
+  <input id="fileInput" type="file" accept=".zip" class="form-control" />
   <button class="btn btn-primary" onclick="parseFile()">Analizza</button>
 </div>
 
 <div id="cards" class="mt-3"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="./js/script.js"></script>
 </body>
 </html>

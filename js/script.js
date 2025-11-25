@@ -1,12 +1,46 @@
-function parseFile(){
+async function parseFile(){
   const f = document.getElementById('fileInput').files[0];
-  if(!f){ alert('Seleziona un file XML'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    const xml = new DOMParser().parseFromString(e.target.result, 'application/xml');
+  if(!f){ alert('Seleziona un file ZIP'); return; }
+  
+  try {
+    const zipContent = await f.arrayBuffer();
+    const zip = new JSZip();
+    const loadedZip = await zip.loadAsync(zipContent);
+    
+    // Il nome dello zip senza estensione
+    const zipName = f.name.replace(/\.zip$/i, '');
+    
+    // Cercare il file XML nel percorso: [zipName]/dict/[file.xml]
+    const dictPath = `${zipName}/dict/`;
+    let xmlFile = null;
+    
+    // Cercare il file XML nella cartella dict
+    for (let file in loadedZip.files) {
+      if (file.startsWith(dictPath) && file.endsWith('.xml')) {
+        xmlFile = loadedZip.files[file];
+        break;
+      }
+    }
+    
+    if (!xmlFile) {
+      alert(`Nessun file XML trovato in ${dictPath}`);
+      return;
+    }
+    
+    const xmlContent = await xmlFile.async('string');
+    const xml = new DOMParser().parseFromString(xmlContent, 'application/xml');
+    
+    // Controllare errori di parsing
+    if (xml.getElementsByTagName('parsererror').length > 0) {
+      alert('Errore nel parsing del file XML');
+      return;
+    }
+    
     buildCards(xml);
-  };
-  reader.readAsText(f);
+  } catch (error) {
+    alert('Errore nell\'elaborazione del file ZIP: ' + error.message);
+    console.error(error);
+  }
 }
 
 function buildCards(xml){
@@ -25,7 +59,11 @@ function buildCards(xml){
     const uu = uuNode ? uuNode.textContent.trim() : '(nessun UU)';
 
     const title = document.createElement('h4');
-    title.textContent = tagName + ' ['+elementName.textContent+']';
+    title.textContent = tagName;
+
+    if(elementName != null){
+      title.textContent += ' ['+elementName.textContent+']';
+    }
 
     const subtitle = document.createElement('div');
     subtitle.className = 'text-muted mb-2';
