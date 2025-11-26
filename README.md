@@ -1,5 +1,5 @@
 # iDempiere PackOut Analyzer
-Upload your iDempiere PackOut.xml file, it will show any references.
+Upload your iDempiere PackOut zip file, it will show any references.
 
 <img width="2818" height="1462" alt="image" src="https://github.com/user-attachments/assets/6d1094dc-8e75-4d31-9c76-17135a8b39e0" />
 
