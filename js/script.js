@@ -72,19 +72,48 @@ function buildCards(xml){
       card.id = `card-${uu}`;
     }
 
+    // Header della card con titolo e pulsante collapse
+    const cardHeader = document.createElement('div');
+    cardHeader.className = 'd-flex justify-content-between align-items-center mb-2';
+
+    const titleWrapper = document.createElement('div');
+    titleWrapper.className = 'd-flex flex-column flex-sm-row align-items-start align-items-sm-center gap-2';
+
     const title = document.createElement('h4');
     title.textContent = tagName;
+    title.className = 'm-0';
 
     if(elementName != null){
       title.textContent += ' ['+elementName.textContent+']';
     }
 
+    const uuInTitle = document.createElement('small');
+    uuInTitle.className = 'text-muted d-none';
+    uuInTitle.textContent = uu;
+
+    titleWrapper.appendChild(title);
+    titleWrapper.appendChild(uuInTitle);
+
+    const collapseBtn = document.createElement('button');
+    collapseBtn.className = 'btn btn-sm btn-outline-secondary';
+    collapseBtn.type = 'button';
+    collapseBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+    collapseBtn.setAttribute('aria-label', 'Riduci card');
+
+    cardHeader.appendChild(titleWrapper);
+    cardHeader.appendChild(collapseBtn);
+
+    card.appendChild(cardHeader);
+
+    // Contenitore per il contenuto della card
+    const cardContent = document.createElement('div');
+    cardContent.className = 'card-content';
+
     const subtitle = document.createElement('div');
     subtitle.className = 'text-muted mb-2';
     subtitle.textContent = uu;
 
-    card.appendChild(title);
-    card.appendChild(subtitle);
+    cardContent.appendChild(subtitle);
 
     const children = Array.from(table.children);
 
@@ -160,10 +189,32 @@ function buildCards(xml){
         group.appendChild(queryDisplay);
         group.appendChild(btn);
 
-        card.appendChild(label);
-        card.appendChild(group);
+        cardContent.appendChild(label);
+        cardContent.appendChild(group);
       }
     });
+
+    card.appendChild(cardContent);
+
+    // Handler per il pulsante collapse/expand
+    let isCollapsed = false;
+    collapseBtn.onclick = () => {
+      isCollapsed = !isCollapsed;
+      
+      if (isCollapsed) {
+        // Collapse: nascondi contenuto, sposta UU in title
+        cardContent.style.display = 'none';
+        uuInTitle.classList.remove('d-none');
+        collapseBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>';
+        collapseBtn.setAttribute('aria-label', 'Espandi card');
+      } else {
+        // Expand: mostra contenuto, nascondi UU in title
+        cardContent.style.display = 'block';
+        uuInTitle.classList.add('d-none');
+        collapseBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
+        collapseBtn.setAttribute('aria-label', 'Riduci card');
+      }
+    };
 
     container.appendChild(card);
   });

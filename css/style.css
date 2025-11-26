@@ -76,3 +76,27 @@ label, .text-muted {
   text-underline-offset: 2px;
   color: #bb1515;
 }
+
+/* Collapse/Expand card styles */
+.card-content {
+  transition: opacity 0.3s ease;
+}
+
+h4 {
+  margin-bottom: 0;
+}
+
+small.text-muted {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+
+.uuid-not-in-list {
+  text-decoration: underline;
+  text-decoration-color: #bb1515;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+  color: #bb1515;
+}
