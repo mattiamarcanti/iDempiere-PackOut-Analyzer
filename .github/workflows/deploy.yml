@@ -2,7 +2,7 @@ name: Deploy FTP to mattiamarcanti.it [TEST]
 
 on:
   push:
-    branches: ["main"] 
+    branches: ["feature/7_graficoPack"] 
 
 jobs:
   deploy:
