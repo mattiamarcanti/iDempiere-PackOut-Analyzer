@@ -29,6 +29,10 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           Analizza
         </button>
+        <button class="btn-draw" onclick="showHierarchy()" id="btnDraw" style="display:none;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="8" y="14" width="8" height="7" rx="1"/><line x1="6.5" y1="10" x2="6.5" y2="14"/><line x1="17.5" y1="10" x2="17.5" y2="14"/></svg>
+          Gerarchia
+        </button>
       </div>
     </div>
   </div>
@@ -81,6 +85,28 @@
     <p>Nessun risultato trovato</p>
   </div>
 </main>
+
+<!-- Hierarchy overlay -->
+<div class="overlay" id="hierarchyOverlay" style="display:none;">
+  <div class="overlay-toolbar">
+    <span class="overlay-title">Gerarchia PackOut</span>
+    <button class="btn-close-overlay" onclick="closeHierarchy()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="overlay-body" id="hierarchyBody"></div>
+</div>
+
+<!-- Detail overlay -->
+<div class="overlay" id="detailOverlay" style="display:none;">
+  <div class="overlay-toolbar">
+    <span class="overlay-title" id="detailTitle">Dettaglio</span>
+    <button class="btn-close-overlay" onclick="closeDetail()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="overlay-body" id="detailBody"></div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="./js/script.js"></script>
