@@ -7,16 +7,28 @@ let elementFieldsMap = {}; // uu -> { tagName, name, fields: [{key, value, refer
 
 // ── Parent-child hierarchy (known iDempiere relationships) ──
 // Keys and values are already normalized (no underscores, lowercase)
+// Child -> Parent (child references parent via FK)
 const CHILD_TO_PARENT = {
   'adcolumn':        'adtable',
   'adfield':         'adtab',
   'adtab':           'adwindow',
-  'adwindow':        'admenu',
+  'adindexcolumn':   'adcolumn',
+  'adtableindex':    'adtable',
+  'adinfocolumn':    'adinfowindow',
+  'adinfoprocess':   'adinfowindow',
   'adreflist':       'adreference',
   'adreferencelist': 'adreference',
+  'adreftable':      'adreference',
   'adprocesspara':   'adprocess',
   'adprocessparam':  'adprocess',
 };
+
+// AD_Menu is special: the PARENT references the CHILD (AD_Window or AD_Process)
+// This list defines which child types AD_Menu can point to, and which field to look for
+const MENU_CHILD_FIELDS = [
+  { fieldNorm: 'adwindow', childType: 'adwindow' },
+  { fieldNorm: 'adprocess', childType: 'adprocess' },
+];
 
 function normalizeTag(tag) {
   return tag.replace(/[_\s]/g, '').toLowerCase();
@@ -24,12 +36,14 @@ function normalizeTag(tag) {
 
 // Reverse lookup: normalized tag -> display name
 const PARENT_DISPLAY_NAMES = {
-  'adtable':     'AD_Table',
-  'adtab':       'AD_Tab',
-  'adwindow':    'AD_Window',
-  'admenu':      'AD_Menu',
-  'adreference': 'AD_Reference',
-  'adprocess':   'AD_Process',
+  'adtable':      'AD_Table',
+  'adcolumn':     'AD_Column',
+  'adtab':        'AD_Tab',
+  'adwindow':     'AD_Window',
+  'admenu':       'AD_Menu',
+  'adreference':  'AD_Reference',
+  'adprocess':    'AD_Process',
+  'adinfowindow': 'AD_InfoWindow',
 };
 
 function denormalizeTag(normTag) {
@@ -591,7 +605,7 @@ function showHierarchy() {
   });
 
   // 3. For each child element, find its parent via UUID or ID reference
-  const childParentMap = {}; // childUu -> parentUu
+  const childParentMap = {}; // childUu -> parentUu (or synthetic key for externals)
 
   allCardData.forEach(({ tagName, uu }) => {
     if (!uu || !elementFieldsMap[uu]) return;
@@ -604,16 +618,15 @@ function showHierarchy() {
     // A) Try UUID references first
     for (const f of fields) {
       if (f.reference === 'uuid' && f.value) {
-        // Direct match: referenced element is in packout and is the expected parent type
         const refInfo = uuToInfo[f.value];
         if (refInfo && normalizeTag(refInfo.tagName) === expectedParentNorm) {
           childParentMap[uu] = f.value;
           return;
         }
-        // Field key matches parent type (covers external parents too)
         const fieldKeyNorm = normalizeTag(f.referenceKey || f.key.replace(/_ID$|ID$|_UU$|UU$/, ''));
         if (fieldKeyNorm === expectedParentNorm) {
-          childParentMap[uu] = f.value;
+          // External parent via UUID — synthetic key with UU info
+          childParentMap[uu] = `ext-uu:${expectedParentNorm}:${f.value}`;
           return;
         }
       }
@@ -624,16 +637,55 @@ function showHierarchy() {
       if (f.reference === 'id' && f.value) {
         const fieldKeyNorm = normalizeTag(f.referenceKey || f.key.replace(/_ID$|ID$/, ''));
         if (fieldKeyNorm === expectedParentNorm) {
-          // Look up in the ID map to find the parent's UU
           const parentUu = idToUu[expectedParentNorm + '|' + f.value];
           if (parentUu) {
             childParentMap[uu] = parentUu;
             return;
           }
-          // Parent not in packout — store a synthetic key so we can still group
-          // Use a placeholder: "ext-id:<parentType>:<idValue>"
           childParentMap[uu] = `ext-id:${expectedParentNorm}:${f.value}`;
           return;
+        }
+      }
+    }
+  });
+
+  // 4. Special case: AD_Menu references its children (AD_Window or AD_Process)
+  //    The parent (AD_Menu) has the FK to the child, not the other way around
+  allCardData.forEach(({ tagName, uu }) => {
+    if (!uu || !elementFieldsMap[uu]) return;
+    if (normalizeTag(tagName) !== 'admenu') return;
+
+    const fields = elementFieldsMap[uu].fields;
+
+    for (const mc of MENU_CHILD_FIELDS) {
+      // Try UUID field first
+      for (const f of fields) {
+        if (f.reference === 'uuid' && f.value) {
+          const fkNorm = normalizeTag(f.referenceKey || f.key.replace(/_ID$|ID$|_UU$|UU$/, ''));
+          if (fkNorm === mc.fieldNorm) {
+            // Check if referenced element is in packout
+            const childInfo = uuToInfo[f.value];
+            if (childInfo && normalizeTag(childInfo.tagName) === mc.childType) {
+              // Only add if this child isn't already assigned to another parent
+              if (!childParentMap[f.value]) {
+                childParentMap[f.value] = uu; // menu is the parent
+              }
+            }
+            break;
+          }
+        }
+      }
+      // Try ID field
+      for (const f of fields) {
+        if (f.reference === 'id' && f.value) {
+          const fkNorm = normalizeTag(f.referenceKey || f.key.replace(/_ID$|ID$/, ''));
+          if (fkNorm === mc.fieldNorm) {
+            const childUu = idToUu[mc.childType + '|' + f.value];
+            if (childUu && !childParentMap[childUu]) {
+              childParentMap[childUu] = uu;
+            }
+            break;
+          }
         }
       }
     }
@@ -666,7 +718,9 @@ function showHierarchy() {
 
   Object.entries(parentGroups).forEach(([parentKey, children]) => {
     const isExtId = parentKey.startsWith('ext-id:');
-    const parentInfo = isExtId ? null : uuToInfo[parentKey];
+    const isExtUu = parentKey.startsWith('ext-uu:');
+    const isExt = isExtId || isExtUu;
+    const parentInfo = isExt ? null : uuToInfo[parentKey];
     let parentTagName, parentName, isInternal, parentUu;
 
     if (parentInfo) {
@@ -679,18 +733,26 @@ function showHierarchy() {
       // External parent resolved by ID: "ext-id:<normTag>:<idValue>"
       const parts = parentKey.split(':');
       const normTag = parts[1];
-      const idVal = parts[2];
-      // Denormalize tag for display (best effort from CHILD_TO_PARENT values)
+      const idVal = parts.slice(2).join(':');
       parentTagName = denormalizeTag(normTag);
       parentName = `ID ${idVal} (esterno)`;
       isInternal = false;
       parentUu = null;
-    } else {
-      // External parent resolved by UUID (not in packout)
-      parentTagName = guessParentTag(children);
-      parentName = '(esterno)';
+    } else if (isExtUu) {
+      // External parent resolved by UUID: "ext-uu:<normTag>:<uuValue>"
+      const parts = parentKey.split(':');
+      const normTag = parts[1];
+      const uuVal = parts.slice(2).join(':');
+      parentTagName = denormalizeTag(normTag);
+      parentName = `UU ${uuVal} (esterno)`;
       isInternal = false;
-      parentUu = parentKey;
+      parentUu = null;
+    } else {
+      // External parent — UUID key not in packout (shouldn't happen now, but fallback)
+      parentTagName = guessParentTag(children);
+      parentName = `UU ${parentKey} (esterno)`;
+      isInternal = false;
+      parentUu = null;
     }
 
     parentCards.push({

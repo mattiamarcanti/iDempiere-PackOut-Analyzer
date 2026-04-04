@@ -820,8 +820,9 @@ main.container-fluid {
   letter-spacing: 0.04em;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   position: sticky;
-  top: 0;
+  top: -24px;
   background: #0d0d0d;
+  z-index: 1;
 }
 
 .detail-table tbody tr {
