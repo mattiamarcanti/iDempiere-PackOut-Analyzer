@@ -1,11 +1,25 @@
-name: Deploy FTP to mattiamarcanti.it [TEST]
+name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main"] 
+    branches: ["main"]
+
+# Permessi necessari per GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Evita deploy concorrenti
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
 
     steps:
@@ -18,23 +32,17 @@ jobs:
         run: |
           VERSION=$(git describe --tags --always)
           YEAR=$(git log -1 --format=%cd --date=format:%Y)
-          find . -type f \( -name '*.html' -o -name '*.php' \) \
+          find . -type f \( -name '*.html' -o -name '*.php' -o -name '*.js' \) \
             -exec sed -i "s/%%VERSION%%/$VERSION/g; s/%%YEAR%%/$YEAR/g" {} +
 
-      - name: Deploy to Aruba hosting mattiamarcanti.it via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          server: ${{ secrets.FTP_SERVER }}      
-          username: ${{ secrets.FTP_USER }}       
-          password: ${{ secrets.FTP_PASSWORD }}   
-          protocol: ftps
-          port: 21
+          path: '.'
 
-          # 📌 CARTELLA DI DESTINAZIONE SUL SERVER
-          server-dir: /iDempierePackoutAnalyzer/
-
-          # 📌 CARTELLA LOCALE DA CARICARE (tutto il repo)
-          local-dir: ./
-
-          # opzionale: sovrascrivi sempre
-          dangerous-clean-slate: false
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

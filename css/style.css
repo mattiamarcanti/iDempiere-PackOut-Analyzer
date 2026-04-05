@@ -8,6 +8,8 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Header ── */
@@ -885,6 +887,7 @@ main.container-fluid {
   padding: 1.5rem 1rem;
   color: #64748b;
   font-size: .85rem;
+  margin-top: auto;
 }
 .site-footer .footer-version {
   font-family: 'JetBrains Mono', monospace;
