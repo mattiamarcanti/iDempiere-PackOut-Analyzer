@@ -878,3 +878,16 @@ main.container-fluid {
   .search-box { max-width: 100%; min-width: 0; flex-basis: 100%; order: -1; }
   .filter-group { flex-basis: 100%; }
 }
+
+/* Site Footer */
+.site-footer {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  color: #64748b;
+  font-size: .85rem;
+}
+.site-footer .footer-version {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .72rem;
+  opacity: 0.7;
+}

@@ -11,6 +11,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Stamp version
+        run: |
+          VERSION=$(git describe --tags --always)
+          YEAR=$(git log -1 --format=%cd --date=format:%Y)
+          find . -type f \( -name '*.html' -o -name '*.php' \) \
+            -exec sed -i "s/%%VERSION%%/$VERSION/g; s/%%YEAR%%/$YEAR/g" {} +
 
       - name: Deploy to Aruba hosting mattiamarcanti.it via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
